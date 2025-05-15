@@ -216,7 +216,7 @@ with col3:
         prediction_proba = model.predict_proba(X)
 
         st.header(f"Tomorrow's rainfall prediction: {prediction[0]}" )
-        st.write("Rainfall probability:", round(prediction_proba[0][1], 4) * 100, "%")
+        st.write("Rainfall probability:", round(prediction_proba[0][1]* 100, 2), "%")
 
         # Show image and message in col4
         with col4:
