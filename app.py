@@ -30,6 +30,7 @@ def generate_inputs(cols, title=None):
 
 st.image("images/header.png", use_container_width=True)
 st.write("Please provide today's weather data to get the prediction for tomorrow's rainfall.")
+st.header("APP.py")
 
 @st.cache_data
 def load_data(file):
