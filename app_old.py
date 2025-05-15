@@ -4,12 +4,73 @@ import numpy as np
 import joblib 
 import pydeck as pdk
 
+st.image("images/header.png", use_container_width=True)
+# st.title("Weather Forecast App AUS")
+# st.write("This app predicts the rainfall in Australia based on the given features.") 
+st.write("Please provide today's weather data to get the prediction for tomorrow's rainfall.")
 
-def generate_inputs(cols, title=None):
-    """Generate Streamlit inputs for a list of columns."""
-    if title:
-        st.write(title)
-    for col in cols:
+# download the data to provide min-max ranges for each feature
+
+@st.cache_data
+def load_data():
+    path = "data/"
+    df = pd.read_csv(path + "weatherAUS.csv")
+    return df
+
+df = load_data()
+weather_model = joblib.load("model/aussie_rain.joblib")
+
+full_cols = weather_model['input_cols']
+
+input_cols = weather_model['input_cols']
+target_cols = weather_model['target_col']
+
+
+# include all columns which include "9am"
+input_9am = [col for col in df.columns if "9am" in col]
+# include all columns which include "3pm"
+input_3pm = [col for col in df.columns if "3pm" in col]
+
+drop_cols = ["RainToday", "Location"] + input_9am + input_3pm
+
+input_rest = [col for col in full_cols if col not in drop_cols]
+
+#create number input fields for each feature
+st.write("Please enter the weather data for today:")
+
+input_data = {}
+
+
+# Make part of the value missing by default if user doesn't provide it
+# select the columns which have more than 10000 missing values
+empty_cols = df.isna().sum().sort_values(ascending=False) 
+empty_cols = list(empty_cols[empty_cols > 10000].index)
+# empty_cols = ["Sunshine", "Evaporation", "Cloud3pm", "Cloud9am", "Pressure9am", "Pressure3pm", "WindDir9am", "WindGustDir", "WindGustSpeed"]
+
+for col in input_rest:
+    if col in df.columns:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            min_val = float(df[col].min())
+            max_val = float(df[col].max())
+            input_data[col] = st.number_input(
+                f"{col} (min: {min_val}, max: {max_val})",
+                min_value=min_val,
+                max_value=max_val,
+                value = None if col in empty_cols else min_val
+            )
+
+        else:
+            options = df[col].dropna().unique()
+            input_data[col] = st.selectbox(f"{col}", options)
+    else:
+        st.warning(f"{col} is not a valid feature. Please check the feature list.")
+
+
+col1, col2 = st.columns(2)
+
+with col1: # add all the columns which include "9am"
+    st.write("Please enter the weather data for 9am:")
+    for col in input_9am:
         if col in df.columns:
             if pd.api.types.is_numeric_dtype(df[col]):
                 min_val = float(df[col].min())
@@ -18,7 +79,26 @@ def generate_inputs(cols, title=None):
                     f"{col} (min: {min_val}, max: {max_val})",
                     min_value=min_val,
                     max_value=max_val,
-                    value=None if col in empty_cols else min_val
+                    value = None if col in empty_cols else min_val
+                )
+            else:
+                options = df[col].dropna().unique()
+                input_data[col] = st.selectbox(f"{col}", options)
+        else:
+            st.warning(f"{col} is not a valid feature. Please check the feature list.")
+
+with col2: # add all the columns which include "3pm"
+    st.write("Please enter the weather data for 3pm:")
+    for col in input_3pm:
+        if col in df.columns:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                min_val = float(df[col].min())
+                max_val = float(df[col].max())
+                input_data[col] = st.number_input(
+                    f"{col} (min: {min_val}, max: {max_val})",
+                    min_value=min_val,
+                    max_value=max_val,
+                    value= None if col in empty_cols else min_val
                 )
             else:
                 options = df[col].dropna().unique()
@@ -28,45 +108,6 @@ def generate_inputs(cols, title=None):
 
 
 
-st.image("images/header.png", use_container_width=True)
-st.write("Please provide today's weather data to get the prediction for tomorrow's rainfall.")
-
-@st.cache_data
-def load_data(file):
-    path = "data/"
-    df = pd.read_csv(path + file)
-    return df
-
-# Load  data
-df_locations = load_data("locations.csv")  
-df = load_data( "weatherAUS.csv")
-weather_model = joblib.load("model/aussie_rain.joblib")
-
-full_cols = weather_model['input_cols']
-input_cols = weather_model['input_cols']
-target_cols = weather_model['target_col']
-
-
-# include all columns which include "9am"
-input_9am = [col for col in df.columns if "9am" in col]
-# include all columns which include "3pm"
-input_3pm = [col for col in df.columns if "3pm" in col]
-# combine all spsific cols together
-drop_cols = ["RainToday", "Location"] + input_9am + input_3pm
-# save the rest of the columns
-input_rest = [col for col in full_cols if col not in drop_cols]
-
-
-# create number input fields for each feature
-
-st.write("Please enter the weather data for today:")
-input_data = {}
-
-# Make part of the value missing by default if user doesn't provide it
-# select the columns which have more than 10000 missing values
-empty_cols = df.isna().sum().sort_values(ascending=False) 
-empty_cols = list(empty_cols[empty_cols > 10000].index)
-
 #create the checkbox for RainToday
 rain_today = st.checkbox("RainToday")
 if rain_today:
@@ -75,27 +116,24 @@ else:
     input_data["RainToday"] = "No"
 
 
-# Generate input widgets
-generate_inputs(input_rest)
-
-# Create columns for time-based inputs
-col1, col2 = st.columns(2)
-
-with col1:
-    generate_inputs(input_9am, "Please enter the weather data for 9am:")
-
-with col2:
-    generate_inputs(input_3pm, "Please enter the weather data for 3pm:")
-
-
 # # select box for Locatoin colum 
 st.write("Please select the location:")
 locations = df["Location"].unique()
 location = st.selectbox("Location", locations)   
 input_data["Location"] = location
 
+# df_locations = pd.read_csv("data/locations.csv") # location,id,Latitude,Longitude
 
-# Create map
+# # selected location highlighted
+# st.write("Location coordinates:")
+# location_coords = df_locations[df_locations["location"] == location]
+# st.map(location_coords[["latitude", "longitude"]], color="#ffea00")
+
+
+# Load location data
+df_locations = pd.read_csv("data/locations.csv")  # columns: location, latitude, longitude
+
+# Define base layer: all locations (small gray circles)
 base_layer = pdk.Layer(
     "ScatterplotLayer",
     data=df_locations,
@@ -105,7 +143,7 @@ base_layer = pdk.Layer(
     pickable=True
 )
 
-# selected location (bright yellow)
+# Define highlight layer: selected location (bright yellow)
 highlight_layer = pdk.Layer(
     "ScatterplotLayer",
     data=df_locations[df_locations["location"] == location],
@@ -143,6 +181,7 @@ with col3:
     st.write("Click the button to predict tomorrow's rainfall:")
     if st.button("Predict"):
         # st.write("Data process started...")
+
         
         input_df = pd.DataFrame([input_data])
 
