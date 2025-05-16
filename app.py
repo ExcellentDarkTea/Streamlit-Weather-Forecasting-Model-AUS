@@ -30,7 +30,7 @@ def generate_inputs(cols, title=None):
 
 st.image("images/header.png", use_container_width=True)
 st.write("Please provide today's weather data to get the prediction for tomorrow's rainfall.")
-st.header("APP.py")
+# st.header("APP.py")
 
 @st.cache_data
 def load_data(file):
@@ -63,8 +63,8 @@ input_rest = [col for col in full_cols if col not in drop_cols]
 st.write("Please enter the weather data for today:")
 input_data = {}
 
-# Make part of the value missing by default if user doesn't provide it
-# select the columns which have more than 10000 missing values
+# Make part of the value optional by default
+# select the columns which have more than 10 000 missing values
 empty_cols = df.isna().sum().sort_values(ascending=False) 
 empty_cols = list(empty_cols[empty_cols > 10000].index)
 
