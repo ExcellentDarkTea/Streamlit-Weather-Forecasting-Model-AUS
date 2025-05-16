@@ -1,4 +1,4 @@
-﻿# (Streamlit Weather Prediction App)[https://excellentdarktea-streamlit-weather-forecasting-model-app-kngdng.streamlit.app/]
+﻿# [Streamlit Weather Prediction App](https://excellentdarktea-streamlit-weather-forecasting-model-app-kngdng.streamlit.app/)
 
 
 
@@ -57,7 +57,7 @@ streamlit run app.py
 
 ### 4. Open in your browser
 
-You can use the (link)[https://excellentdarktea-streamlit-weather-forecasting-model-app-kngdng.streamlit.app] to use the app/
+You can use the [link](https://excellentdarktea-streamlit-weather-forecasting-model-app-kngdng.streamlit.app) to use the app.
 
 ## Usage
 
